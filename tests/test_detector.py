@@ -78,3 +78,22 @@ def test_impersonation_language_is_flagged():
         item["type"] == "possible_impersonation"
         for item in result["indicators"]
     )
+
+def test_http_url_is_flagged():
+    result = analyze_email("Please visit http://example.com/login")
+
+    assert any(
+        item["type"] == "http_url"
+        for item in result["indicators"]
+    )
+
+
+def test_url_with_at_symbol_is_flagged():
+    result = analyze_email(
+        "Please visit https://trusted.example@evil.example/login"
+    )
+
+    assert any(
+        item["type"] == "suspicious_url_format"
+        for item in result["indicators"]
+    )

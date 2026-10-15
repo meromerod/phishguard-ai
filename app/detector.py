@@ -106,6 +106,23 @@ def analyze_email(email_text: str) -> dict:
         parsed = urlparse(url)
         hostname = (parsed.hostname or "").lower()
 
+        if parsed.scheme.lower() == "http":
+            add_indicator(
+                "http_url",
+                url,
+                "The link does not use HTTPS, so its connection may lack encryption.",
+                5,
+            )
+
+        if "@" in parsed.netloc:
+            add_indicator(
+                "suspicious_url_format",
+                url,
+                "The URL contains '@', which can make the actual destination misleading.",
+                15,
+            )
+
+
         if IPV4_PATTERN.fullmatch(hostname):
             octets = hostname.split(".")
             if all(0 <= int(octet) <= 255 for octet in octets):
