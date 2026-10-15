@@ -97,3 +97,25 @@ def test_url_with_at_symbol_is_flagged():
         item["type"] == "suspicious_url_format"
         for item in result["indicators"]
     )
+
+
+def test_possible_brand_impersonation_is_flagged():
+    result = analyze_email(
+        "Sign in at https://paypal-login.example/account"
+    )
+
+    assert any(
+        item["type"] == "possible_brand_impersonation"
+        for item in result["indicators"]
+    )
+
+
+def test_legitimate_brand_domain_is_not_flagged_by_brand_rule():
+    result = analyze_email(
+        "Visit https://www.paypal.com/account"
+    )
+
+    assert not any(
+        item["type"] == "possible_brand_impersonation"
+        for item in result["indicators"]
+    )

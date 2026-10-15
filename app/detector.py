@@ -2,6 +2,22 @@
 import re
 from urllib.parse import urlparse
 
+SHORTENER_DOMAINS = {
+    "bit.ly",
+    "tinyurl.com",
+    "t.co",
+    "is.gd",
+    "ow.ly",
+}
+
+
+TRUSTED_BRAND_DOMAINS = {
+    "paypal": {"paypal.com"},
+    "microsoft": {"microsoft.com", "live.com", "office.com"},
+    "google": {"google.com", "gmail.com"},
+    "amazon": {"amazon.com"},
+}
+
 SUSPICIOUS_PHRASES = [
     "verify your account",
     "account suspended",
@@ -105,6 +121,28 @@ def analyze_email(email_text: str) -> dict:
     for url in urls:
         parsed = urlparse(url)
         hostname = (parsed.hostname or "").lower()
+
+        hostname_labels = hostname.split(".")
+
+        for brand, legitimate_domains in TRUSTED_BRAND_DOMAINS.items():
+            brand_mentioned = any(
+                brand in label
+                for label in hostname_labels
+            )
+            is_legitimate_domain = any(
+                hostname == domain or hostname.endswith("." + domain)
+                for domain in legitimate_domains
+            )
+
+            if brand_mentioned and not is_legitimate_domain:
+                add_indicator(
+                    "possible_brand_impersonation",
+                    url,
+                    f"The hostname mentions '{brand}' but is not in the configured legitimate-domain list.",
+                    15,
+                )
+                break
+
 
         if parsed.scheme.lower() == "http":
             add_indicator(
