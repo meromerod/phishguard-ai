@@ -1,0 +1,80 @@
+from app.detector import analyze_email
+
+
+def test_suspicious_email_is_high_risk():
+    email = """
+    Subject: Urgent action required
+    Your account suspended. Verify your account immediately.
+    Visit https://example.com/login
+    """
+    result = analyze_email(email)
+
+    assert result["risk_score"] == 55
+    assert result["risk_level"] == "high"
+
+
+def test_normal_email_is_low_risk():
+    email = """
+    Subject: Meeting reminder
+    Hi, our team meeting is scheduled for tomorrow.
+    """
+    result = analyze_email(email)
+
+    assert result["risk_level"] == "low"
+    assert result["risk_score"] == 0
+
+
+def test_email_with_url_has_indicator():
+    result = analyze_email(
+        "Please visit https://example.com for information."
+    )
+
+    assert result["risk_score"] == 10
+    assert any(
+        item["type"] == "contains_url"
+        for item in result["indicators"]
+    )
+
+
+def test_ip_address_url_is_flagged():
+    result = analyze_email(
+        "Please visit http://192.168.1.10/login"
+    )
+
+    assert any(
+        item["type"] == "ip_address_url"
+        for item in result["indicators"]
+    )
+
+
+def test_shortened_url_is_flagged():
+    result = analyze_email(
+        "Please open https://bit.ly/example"
+    )
+
+    assert any(
+        item["type"] == "shortened_url"
+        for item in result["indicators"]
+    )
+
+
+def test_credential_request_is_flagged():
+    result = analyze_email(
+        "Please enter your password to continue."
+    )
+
+    assert any(
+        item["type"] == "credential_request"
+        for item in result["indicators"]
+    )
+
+
+def test_impersonation_language_is_flagged():
+    result = analyze_email(
+        "Dear customer, the security team needs your attention."
+    )
+
+    assert any(
+        item["type"] == "possible_impersonation"
+        for item in result["indicators"]
+    )
