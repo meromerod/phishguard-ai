@@ -1,19 +1,23 @@
 
 from app.parser import parse_email
 from app.detector import analyze_email
+from app.ml_detector import predict_email
 
 
 def analyze_message(email_text: str) -> dict:
-    """Parse an email and produce a phishing risk report."""
+    """Combine parsing, rule-based detection, and ML prediction."""
 
     parsed_email = parse_email(email_text)
-    detection = analyze_email(email_text)
+    rule_result = analyze_email(email_text)
+    ml_result = predict_email(email_text)
 
     return {
         "email": parsed_email,
-        "risk_score": detection["risk_score"],
-        "risk_level": detection["risk_level"],
-        "indicators": detection["indicators"],
+        "risk_score": rule_result["risk_score"],
+        "risk_level": rule_result["risk_level"],
+        "indicators": rule_result["indicators"],
+        "ml_prediction": ml_result["prediction"],
+        "ml_phishing_probability": ml_result["phishing_probability"],
     }
 
 
@@ -31,8 +35,13 @@ Visit https://example.com/login
     print("-" * 35)
     print(f"Sender: {report['email']['sender']}")
     print(f"Subject: {report['email']['subject']}")
-    print(f"Risk score: {report['risk_score']}/100")
-    print(f"Risk level: {report['risk_level'].upper()}")
+    print(f"Rule-based risk score: {report['risk_score']}/100")
+    print(f"Rule-based risk level: {report['risk_level'].upper()}")
+    print(f"ML prediction: {report['ml_prediction']}")
+    print(
+        "ML phishing probability: "
+        f"{report['ml_phishing_probability']:.2%}"
+    )
     print("\nDetection indicators:")
 
     for indicator in report["indicators"]:
