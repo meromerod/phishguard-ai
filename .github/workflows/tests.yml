@@ -26,6 +26,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Prepare dataset
+        run: python prepare_dataset.py
+
+      - name: Train ML model
+        run: python train_model.py
+
       - name: Run tests
         env:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
